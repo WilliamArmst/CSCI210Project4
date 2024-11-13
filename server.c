@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,26 +31,14 @@ int main() {
 		// TODO:
 		// read requests from serverFIFO
 
-
-
-
-
-
 		printf("Received a request from %s to send the message %s to %s.\n",req.source,req.msg,req.target);
 
 		// TODO:
 		// open target FIFO and write the whole message struct to the target FIFO
 		// close target FIFO after writing the message
-
-
-
-
-
-
-
 	}
+
 	close(server);
 	close(dummyfd);
 	return 0;
 }
-
