@@ -19,7 +19,7 @@ void terminate(int sig) {
 
 int main() {
 	int server;
-	int target;
+	// int target;
 	int dummyfd;
 	struct message req;
 	signal(SIGPIPE,SIG_IGN);
@@ -30,12 +30,22 @@ int main() {
 	while (1) {
 		// TODO:
 		// read requests from serverFIFO
-
+		char buf[512];
+		int n = read(server, buf, 511);
+		buf[n] = '\0';
+		strcpy(req.source, strtok(buf, ":"));
+		strcpy(req.target, strtok(NULL, ":"));
+		strcpy(req.msg, strtok(NULL, ":"));
 		printf("Received a request from %s to send the message %s to %s.\n",req.source,req.msg,req.target);
 
-		// TODO:
-		// open target FIFO and write the whole message struct to the target FIFO
-		// close target FIFO after writing the message
+		char toSend[512] = {};
+		strcat(toSend, req.source);
+		strcat(toSend, ":");
+		strcat(toSend, req.msg);
+		
+		int targetFIFO = open(req.target, O_WRONLY);
+		write(targetFIFO, toSend, n);
+		close(targetFIFO);
 	}
 
 	close(server);

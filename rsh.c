@@ -27,9 +27,15 @@ void terminate(int sig) {
 }
 
 void sendmsg (char *user, char *target, char *msg) {
-	// TODO:
-	// Send a request to the server to send the message (msg) to the target user (target)
-	// by creating the message structure and writing it to server's FIFO
+	char buf[512] = {};
+	strcat(buf, user);
+	strcat(buf, ":");
+	strcat(buf, target);
+	strcat(buf, ":");
+	strcat(buf, msg);
+	int fd = open("serverFIFO", O_WRONLY);
+	write(fd,buf,strlen(buf));
+	close(fd);
 }
 
 void* messageListener(void *arg) {
@@ -40,6 +46,18 @@ void* messageListener(void *arg) {
 	// following format
 	// Incoming message from [source]: [message]
 	// put an end of line at the end of the message
+
+	while (1) {
+		char buf[512];
+		char source[256];
+		char message[256];
+
+		int fd = open(uName, O_RDONLY);
+		int n = read(fd, buf, 511);
+		strcpy(source, strtok(buf, ":"));
+		strcpy(message, strtok(NULL, ":"));
+		printf("Incomming message from %s: %s\n", source, message);
+	}
 
 	pthread_exit((void*)0);
 }
@@ -72,6 +90,11 @@ int main(int argc, char **argv) {
 
 	// TODO:
 	// create the message listener thread
+    pthread_t tid;
+    int *arr;
+    arr = (int*)malloc(sizeof(int)*500);
+    pthread_create(&tid, NULL, messageListener, (void *)arr); 
+	// printf("created thread: %ld\n", tid);
 
 	while (1) {
 		fprintf(stderr,"rsh>");
@@ -94,17 +117,27 @@ int main(int argc, char **argv) {
 		if (strcmp(cmd,"sendmsg") == 0) {
 			// TODO: Create the target user and
 			// the message string and call the sendmsg function
+			char target[256];
+			char message[256];
 
-			// NOTE: The message itself can contain spaces
-			// If the user types: "sendmsg user1 hello there"
-			// target should be "user1" 
-			// and the message should be "hello there"
+			char *token = strtok(NULL, " ");
+			if (token == NULL) {
+				printf("sendmsg: you have to specify target user\n");
+				continue;
+			}
+			strcpy(target, token);
 
-			// if no argument is specified, you should print the following
-			// printf("sendmsg: you have to specify target user\n");
-			// if no message is specified, you should print the followingA
-			// printf("sendMsg: you have to enter a message\n");
+			token = strtok(NULL, "\0");
+			if (token == NULL) {
+				printf("sendMsg: you have to enter a message\n");
+				continue;
+			}
+			strcpy(message, token);
 
+			// printf("target: %s\n", target);
+			// printf("message: %s\n", message);
+
+			sendmsg(uName, target, message);
 			continue;
 		}
 
