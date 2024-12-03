@@ -28,19 +28,18 @@ int main() {
 	dummyfd = open("serverFIFO",O_WRONLY);
 
 	while (1) {
-		// TODO:
-		// read requests from serverFIFO
-		char buf[512];
+        char buf[512] = {};
 		int n = read(server, buf, 511);
+        // printf("n: %d, buf: %s\n", n, buf);
 		buf[n] = '\0';
-		strcpy(req.source, strtok(buf, ":"));
-		strcpy(req.target, strtok(NULL, ":"));
-		strcpy(req.msg, strtok(NULL, ":"));
+		strcpy(req.source, strtok(buf, ";"));
+		strcpy(req.target, strtok(NULL, ";"));
+		strcpy(req.msg, strtok(NULL, ";"));
 		printf("Received a request from %s to send the message %s to %s.\n",req.source,req.msg,req.target);
 
 		char toSend[512] = {};
 		strcat(toSend, req.source);
-		strcat(toSend, ":");
+		strcat(toSend, ";");
 		strcat(toSend, req.msg);
 		
 		int targetFIFO = open(req.target, O_WRONLY);

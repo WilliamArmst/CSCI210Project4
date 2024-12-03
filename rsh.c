@@ -27,38 +27,41 @@ void terminate(int sig) {
 }
 
 void sendmsg (char *user, char *target, char *msg) {
-	char buf[512] = {};
-	strcat(buf, user);
-	strcat(buf, ":");
-	strcat(buf, target);
-	strcat(buf, ":");
-	strcat(buf, msg);
-	int fd = open("serverFIFO", O_WRONLY);
-	write(fd,buf,strlen(buf));
+    char sentMsg[300];
+    strcpy(sentMsg, user);
+    strcat(sentMsg, ";");
+    strcat(sentMsg, target);
+    strcat(sentMsg, ";");
+    strcat(sentMsg, msg);
+    strcat(sentMsg, "\0");
+
+    // printf("sentMsg: %s\n", sentMsg);
+
+    sleep(1); // wait for server to process last message
+    int fd = open("serverFIFO", O_WRONLY);
+	write(fd, &sentMsg, strlen(sentMsg));
 	close(fd);
 }
 
 void* messageListener(void *arg) {
-	// TODO:
-	// Read user's own FIFO in an infinite loop for incoming messages
-	// The logic is similar to a server listening to requests
-	// print the incoming message to the standard output in the
-	// following format
-	// Incoming message from [source]: [message]
-	// put an end of line at the end of the message
+	int fd = open(uName, O_RDONLY);
 
 	while (1) {
-		char buf[512];
-		char source[256];
-		char message[256];
+	    char buf[512];
+        int n = read(fd, buf, 511);
+        buf[n] = '\0';
 
-		int fd = open(uName, O_RDONLY);
-		int n = read(fd, buf, 511);
-		strcpy(source, strtok(buf, ":"));
-		strcpy(message, strtok(NULL, ":"));
-		printf("Incomming message from %s: %s\n", source, message);
+		if (n) {
+            char source[50];
+            char msg[450];
+
+            strcpy(source, strtok(buf, ";"));
+            strcpy(msg, strtok(NULL, ";"));
+            printf("Incoming message from %s: %s\n", source, msg);
+        }
 	}
 
+    close(fd);
 	pthread_exit((void*)0);
 }
 
@@ -164,6 +167,7 @@ int main(int argc, char **argv) {
 
 		cargv = (char**)malloc(sizeof(char*));
 		cargv[0] = (char *)malloc(strlen(cmd)+1);
+
 		path = (char *)malloc(9+strlen(cmd)+1);
 		strcpy(path,cmd);
 		strcpy(cargv[0],cmd);
